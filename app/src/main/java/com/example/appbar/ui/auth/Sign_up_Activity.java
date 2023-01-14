@@ -14,6 +14,8 @@ import android.widget.Toast;
 import com.example.appbar.MainActivity;
 import com.example.appbar.R;
 import com.example.appbar.databinding.ActivitySignUp2Binding;
+import com.example.appbar.ui.farmhelp.FarmHelp;
+import com.example.appbar.ui.home.HomeActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -64,7 +66,7 @@ public class Sign_up_Activity extends AppCompatActivity {
 
         //capture input from user.
         final String name = binding.fname.getText().toString().trim();
-        final String email = binding.signUpEmail.getText().toString().trim();
+        final String email = binding.signUpPhone.getText().toString().trim();
         String password = binding.signupPassword.getText().toString().trim();
         String confirmPassword = binding.confirmPassword.getText().toString().trim();
 
@@ -110,7 +112,7 @@ public class Sign_up_Activity extends AppCompatActivity {
 
                     Toast.makeText(Sign_up_Activity.this, "The display name has been set", Toast.LENGTH_LONG).show();
 
-                    Intent intent = new Intent(Sign_up_Activity.this, MainActivity.class);
+                    Intent intent = new Intent(Sign_up_Activity.this, HomeActivity.class);
                     intent.putExtra("inputFirebaseUserName", inputFirebaseUserName);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); /*FLAG_ACTIVITY_CLEAR_TASK will cause any existing task that would be associated with the activity to be cleared before the activity is started. This prevents this Activity from being unnecessarily accessed via the system back button. FLAG_ACTIVITY_NEW_TASK will make the activity we are navigating to the start of a brand new task on this history stack.*/
                     startActivity(intent);
@@ -166,7 +168,7 @@ public class Sign_up_Activity extends AppCompatActivity {
 
         if (!isGoodEmail) {
 
-            binding.signUpEmail.setError("Please enter a valid email address");
+            binding.signUpPhone.setError("Please enter a valid email address");
             return false;
 
         }
