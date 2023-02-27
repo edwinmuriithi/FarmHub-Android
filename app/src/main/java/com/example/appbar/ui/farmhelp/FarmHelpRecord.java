@@ -13,7 +13,9 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -24,20 +26,20 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.appbar.R;
+import com.example.appbar.databinding.ActivityFarmHelpExplainBinding;
 import com.example.appbar.databinding.ActivityFarmHelpRecordBinding;
-import com.example.appbar.databinding.ActivityFarmhelpBinding;
+import com.example.appbar.ui.auth.LoginActivity;
+import com.example.appbar.ui.auth.Sign_up_Activity;
 import com.example.appbar.ui.farmvideos.FarmVideo;
 import com.example.appbar.ui.home.HomeActivity;
 import com.example.appbar.ui.inbox.InboxActivity;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.example.appbar.ui.profile.ProfileActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,15 +48,14 @@ import java.util.Date;
 
 public class FarmHelpRecord extends AppCompatActivity {
 
+    private static final int GALLERY_REQUEST_CODE = 103;
+    private static final String TAG = "MyActivity";
     private ActivityFarmHelpRecordBinding binding;
-    Button ChooseButton;
-    // Image request code for onActivityResult() .
     int Image_Request_Code = 7;
-    String currentImagePath = null;
-    private  static final int IMAGE_REQUEST =1;
-
-
-
+    public static final int CAMERA_PERMISSION_CODE = 101;
+    String currentImagePath;
+    public static final int CAMERA_REQUEST_CODE =102;
+    public static final int GALLERY_PERMISSION_CODE = 104;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +75,13 @@ public class FarmHelpRecord extends AppCompatActivity {
         bottomNavigationView.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), android.R.color.transparent));
 
 
+        binding.myProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(FarmHelpRecord.this, ProfileActivity.class));
+                finish();
+            }
+        });
         // Perform item selected listener
         bottomNavigationView.setOnItemSelectedListener(item -> {
                 switch(item.getItemId())
@@ -97,143 +105,153 @@ public class FarmHelpRecord extends AppCompatActivity {
                 return false;
 
         });
-        ChooseButton = (Button)findViewById(R.id.gallery);
 
         // Adding click listener to Choose image button.
-        ChooseButton.setOnClickListener(new View.OnClickListener() {
+        binding.gallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                // Creating intent.
-                Intent intent = new Intent();
-
-                // Setting intent type as image to select image from phone storage.
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Please Select Image"), Image_Request_Code);
+                if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
+                    Intent openGallery = new Intent();
+                    openGallery.setType("image/*");
+                    openGallery.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(openGallery,GALLERY_REQUEST_CODE);
+                }else{
+                    ActivityCompat.requestPermissions(FarmHelpRecord.this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},GALLERY_PERMISSION_CODE);
+                }
 
             }
         });
-
-
 
         binding.record.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                captureImage();
-
+                askCameraPermission();
             }
         });
     }
 
+    private void askCameraPermission() {
+            if (ContextCompat.checkSelfPermission(this,Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.CAMERA},CAMERA_PERMISSION_CODE);
 
-    private void captureImage() {
-        Intent cameraIntent = new Intent((MediaStore.ACTION_IMAGE_CAPTURE));
-        if(cameraIntent.resolveActivity(getPackageManager())!=null){
-            File imageFile = null;
-
-            try {
-                imageFile = getImageFile();
-            } catch (IOException e){
-                e.printStackTrace();
+            }else{
+                dispatchTakePictureIntent();
             }
+    }
 
-            if(imageFile!=null){
-                Uri imageUri = FileProvider.getUriForFile(this,"com.example.android.fileprovider",imageFile);
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT,imageUri);
-                startActivityForResult(cameraIntent, IMAGE_REQUEST);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == CAMERA_REQUEST_CODE){
+            if(resultCode == Activity.RESULT_OK){
+             File file = new File(currentImagePath);
+//             binding.testImg.setImageURI(Uri.fromFile(file));
+             Log.d(TAG, "Absolute URL of image is " + Uri.fromFile(file));
 
-                Intent i = new Intent(getApplicationContext(), FarmHelpExplain.class);
-                startActivity(i);
+             Intent cameraIntent = new Intent(this,FarmHelpExplain.class);
+             cameraIntent.putExtra("filepath",file.toString());
+             startActivity(cameraIntent);
+
 
             }
+        }
 
+        if (requestCode == GALLERY_REQUEST_CODE){
+            if (resultCode == Activity.RESULT_OK){
+                Uri contentUri = data.getData();
+                Intent galleryIntent = new Intent(this,FarmHelpExplain.class);
+                galleryIntent.setData(contentUri);
+                startActivity(galleryIntent);
+            }
         }
     }
 
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(currentImagePath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
+
+
+
+    private String getFileExt(Uri contentUri) {
+        ContentResolver c = getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+        return mime.getExtensionFromMimeType(c.getType(contentUri));
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+              dispatchTakePictureIntent();
+            } else {
+                Toast.makeText(this, "Camera Permission is required to use camera", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     private  File getImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageName = "jpg_"+timeStamp+"_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+//        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
         File imageFile = File.createTempFile(imageName,".jpg",storageDir);
         currentImagePath = imageFile.getAbsolutePath();
         return imageFile;
     }
 
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = getImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE);
+            }
+        }
+    }
+
+
 }
 
+//                File file = new File(currentImagePath);
 
+//                Intent cameraIntent = new Intent(FarmHelpRecord.this, FarmHelpExplain.class);
+//                cameraIntent.putExtra("filepath",file.toString());
+//                Log.d(TAG, "Absolute Url of image is " + Uri.fromFile(file));
+//                startActivity(cameraIntent);
 
-
-
-
-
-
-
-
-
-
-
-
-// binding.record.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
+//        if(cameraIntent.resolveActivity(getPackageManager())!=null){
+//            File imageFile = null;
 //
-//                askCameraPermissions();
+//            try {
+//                imageFile = getImageFile();
+//            } catch (IOException e){
+//                e.printStackTrace();
 //            }
-//        });
 //
-//    }
+//            if(imageFile!=null){
+//                Uri imageUri = FileProvider.getUriForFile(this,"com.example.android.fileprovider",imageFile);
+//                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT,imageUri);
+//                startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
+//          }
 //
-//    private void askCameraPermissions() {
-//        if (ContextCompat.checkSelfPermission(this,Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PIC_REQUEST);
 //        }
-//        else {
-//            openCamera();
-//        }
-//    }
-//
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//        if (requestCode == CAMERA_PIC_REQUEST) {
-//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                openCamera();
-//            } else {
-//                Toast.makeText(this, "Camera Permission is Required to use camera", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-//
-//    private void openCamera() {
-//        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-//        startActivityForResult(cameraIntent, CAMERA_PIC_REQUEST);
-//    }
-//
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//
-//            if (resultCode == RESULT_OK) {
-//                if (requestCode == CAMERA_PIC_REQUEST) {
-//                    if (data != null) {
-//                        Bitmap photo = (Bitmap) data.getExtras().get("data");
-//                        /* Passing BITMAP to the Second Activity */
-//                        Intent IntentCamera = new Intent(this, FarmHelpExplain.class);
-//                        IntentCamera.putExtra("BitmapImage", photo);
-//                        startActivity(IntentCamera);
-//                    }
-//                } else if (requestCode == REQUEST_GALLERY) {
-//                    if (data != null) {
-//                        Uri selectedImgUri = data.getData();
-//                        /* Passing ImageURI to the Second Activity */
-//                        Intent IntentGallery = new Intent(this, FarmHelpExplain.class);
-//                        IntentGallery.setData(selectedImgUri);
-//                        startActivity(IntentGallery);
-//                    }
-//
-//                }
-//            }
