@@ -21,7 +21,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
 
-    private static final String BASE_URL = "https://farmhub-api.amolo.me/";
+    private static final String BASE_URL = "https://farmhub.devmoran.com/";
 
 
     private static Retrofit getRetrofit(Context context) {
