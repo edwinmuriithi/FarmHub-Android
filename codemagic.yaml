@@ -1,16 +1,14 @@
 workflows:
-  build-android-app:
-    name: Build Android APK
-    max_build_duration: 30
+  android-app:
+    name: Android Debug APK Build
     environment:
-      vars:
-        GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4096m"
+      java: 17
     scripts:
-      - name: Accept Licenses & Install Android SDK
-        script: |
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-33" "build-tools;33.0.0"
       - name: Build APK
         script: ./gradlew assembleDebug
     artifacts:
       - app/build/outputs/**/*.apk
+    cache:
+      paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
