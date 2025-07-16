@@ -4,7 +4,6 @@ package com.farmtech.farmhub.model.inbox;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import tz.co.hosannahighertech.messagekit.commons.models.IUser;
 
 public class Sender implements IUser {
 

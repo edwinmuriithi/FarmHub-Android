@@ -6,9 +6,6 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
 
-import tz.co.hosannahighertech.messagekit.commons.models.IMessage;
-import tz.co.hosannahighertech.messagekit.commons.models.IUser;
-
 
 public class ThreadResponse implements IMessage {
 
