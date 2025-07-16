@@ -3,10 +3,6 @@ workflows:
     name: Android Debug APK Build
     environment:
       java: 17
-      cache:
-        paths:
-          - ~/.gradle/caches
-          - ~/.gradle/wrapper
     scripts:
       - name: Build APK
         script: ./gradlew assembleDebug
