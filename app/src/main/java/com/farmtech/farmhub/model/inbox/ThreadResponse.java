@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Date;
 
 
-public class ThreadResponse implements IMessage {
+public class ThreadResponse{
 
 //    private final int viewType;
 

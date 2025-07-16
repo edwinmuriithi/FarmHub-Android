@@ -5,7 +5,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 
-public class Sender implements IUser {
+public class Sender{
 
     @SerializedName("names")
     @Expose
