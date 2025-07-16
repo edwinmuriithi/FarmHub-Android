@@ -1,11 +1,15 @@
 workflows:
-  android-app:
+  android-workflow:
     name: Build Android APK
     environment:
-      android: true
+      vars:
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
     scripts:
+      - name: Set up Android SDK
+        script: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-33" "build-tools;33.0.0"
       - name: Build debug APK
         script: ./gradlew assembleDebug
     artifacts:
-      - build/app/outputs/**/*.apk
-
+      - app/build/outputs/**/*.apk
