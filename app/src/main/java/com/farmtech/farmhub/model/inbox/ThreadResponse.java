@@ -108,9 +108,8 @@ public class ThreadResponse{
         return text;
     }
 
-    @Override
-    public IUser getUser() {
-        return null;
+   public Recipient getUser() {
+        return null; // or return actual recipient instance if available
     }
 
     @Override
