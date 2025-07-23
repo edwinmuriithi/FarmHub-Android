@@ -99,7 +99,6 @@ public class ThreadResponse{
         this.read = read;
     }
 
-    @Override
     public String getId() {
         return null;
     }
@@ -112,7 +111,7 @@ public class ThreadResponse{
         return null; // or return actual recipient instance if available
     }
 
-    @Override
+
     public Date getCreatedAt() {
         return null;
     }
