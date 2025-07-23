@@ -35,17 +35,17 @@ public class Sender{
         this.names = names;
     }
 
-    @Override
+    
     public String getId() {
         return null;
     }
 
-    @Override
+    
     public String getName() {
         return null;
     }
 
-    @Override
+    
     public String getAvatar() {
         return null;
     }
